@@ -6,7 +6,7 @@ A fully front-end, zero-dependency task management and focus system built for th
 * **PaaS Deployment (Vercel):** [https://smart-study-planner-six-rho.vercel.app/](https://smart-study-planner-six-rho.vercel.app/)
 * **IaaS Deployment (AWS EC2):** [http://3.25.84.84/](http://3.25.84.84/)
 
-![Smart Study Planner Banner](https://via.placeholder.com/800x400.png?text=Smart+Study+Planner+%7C+Cyberpunk+SaaS)
+
 
 ## ✨ 5 Core Features
 
