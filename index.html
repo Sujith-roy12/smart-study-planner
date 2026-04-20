@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Study Planner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Cybersecurity Palette */
+            --bg-void: #020202;
+            --bg-panel: #0a0a0c;
+            --bg-input: #000000;
+
+            --purple-neon: #b026ff;
+            --purple-glow: rgba(176, 38, 255, 0.6);
+            --purple-dim: rgba(176, 38, 255, 0.15);
+            --purple-border: #4b1173;
+
+            --text-primary: #d4a1ff;
+            /* Light purple for readability */
+            --text-header: #b026ff;
+            --text-muted: #6b4c8a;
+
+            --sys-high: #ff003c;
+            --sys-mid: #ffb800;
+            --sys-low: #00ffcc;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Fira Code', monospace;
+        }
+
+        body {
+            background-color: var(--bg-void);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            /* Cyber Grid Background */
+            background-image:
+                linear-gradient(var(--purple-dim) 1px, transparent 1px),
+                linear-gradient(90deg, var(--purple-dim) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: center center;
+        }
+
+        /* CRT Scanline Overlay */
+        body::after {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        /* Layout Reorganization - Command Center Style */
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 350px 1fr 350px;
+            grid-template-rows: auto 1fr;
+            gap: 1.5rem;
+            height: 100vh;
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr 1fr;
+                height: auto;
+            }
+
+            .col-mid {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 800px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Header Span */
+        header {
+            grid-column: 1 / -1;
+            border-bottom: 2px solid var(--purple-neon);
+            padding-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            box-shadow: 0 10px 20px -10px var(--purple-glow);
+        }
+
+        .logo h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--purple-neon);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px var(--purple-glow);
+        }
+
+        .logo p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .system-status {
+            color: var(--sys-low);
+            font-size: 0.9rem;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        /* Terminal Panels */
+        .terminal-panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--purple-border);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .terminal-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 10px;
+            height: 10px;
+            border-top: 2px solid var(--purple-neon);
+            border-left: 2px solid var(--purple-neon);
+        }
+
+        .terminal-panel::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 10px;
+            height: 10px;
+            border-bottom: 2px solid var(--purple-neon);
+            border-right: 2px solid var(--purple-neon);
+        }
+
+        .panel-header {
+            background: var(--purple-dim);
+            color: var(--purple-neon);
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--purple-border);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .panel-content {
+            padding: 1.5rem;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        /* Custom Scrollbar for Terminal */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-input);
+            border-left: 1px solid var(--purple-border);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--purple-dim);
+            border: 1px solid var(--purple-neon);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--purple-neon);
+        }
+
+        /* Form Styles */
+        .input-group {
+            margin-bottom: 1.2rem;
+        }
+
+        label {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+        }
+
+        label::before {
+            content: '>';
+            color: var(--purple-neon);
+            margin-right: 5px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--purple-border);
+            color: var(--text-primary);
+            padding: 0.8rem;
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--purple-neon);
+            box-shadow: inset 0 0 10px var(--purple-dim);
+        }
+
+        option {
+            background: var(--bg-void);
+        }
+
+        /* Buttons */
+        .cmd-btn {
+            width: 100%;
+            background: transparent;
+            color: var(--purple-neon);
+            border: 1px solid var(--purple-neon);
+            padding: 1rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cmd-btn:hover {
+            background: var(--purple-neon);
+            color: var(--bg-void);
+            box-shadow: 0 0 15px var(--purple-glow);
+        }
+
+        .cmd-btn::before {
+            content: '[ ';
+        }
+
+        .cmd-btn::after {
+            content: ' ]';
+        }
+
+        .cmd-btn:hover::before,
+        .cmd-btn:hover::after {
+            color: var(--bg-void);
+        }
+
+        /* Stop Button Override */
+        .stop-btn {
+            border-color: var(--sys-high);
+            color: var(--sys-high);
+        }
+
+        .stop-btn:hover:not(:disabled) {
+            background: var(--sys-high);
+            color: var(--bg-void);
+            box-shadow: 0 0 15px rgba(255, 0, 60, 0.4);
+        }
+
+        .stop-btn:disabled {
+            border-color: var(--text-muted);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        /* Progress Tracker */
+        .progress-tracker .panel-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        #progress-percentage {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--purple-neon);
+            text-shadow: 0 0 10px var(--purple-glow);
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 20px;
+            border: 1px solid var(--purple-border);
+            background: var(--bg-input);
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--purple-neon);
+            width: 0%;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px var(--purple-glow);
+        }
+
+        /* Cyberpunk Bar Stripes */
+        .progress-bar-fill::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background-image: linear-gradient(-45deg, rgba(0, 0, 0, 0.2) 25%, transparent 25%, transparent 50%, rgba(0, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0.2) 75%, transparent 75%, transparent);
+            background-size: 20px 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            border-top: 1px dashed var(--purple-border);
+            padding-top: 1rem;
+        }
+
+        .stat-box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .stat-num {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .pending-num {
+            color: var(--sys-mid);
+        }
+
+        .complete-num {
+            color: var(--sys-low);
+        }
+
+        /* Task List - Log Style */
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 2rem;
+            border: 1px dashed var(--purple-border);
+        }
+
+        .task-item {
+            background: var(--bg-input);
+            border-left: 3px solid var(--purple-neon);
+            padding: 1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            position: relative;
+        }
+
+        .task-item:hover {
+            background: var(--purple-dim);
+        }
+
+        .custom-checkbox {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 1px solid var(--purple-neon);
+            background: var(--bg-void);
+            cursor: pointer;
+            position: relative;
+            border-radius: 0;
+            /* Sharp edges */
+        }
+
+        .custom-checkbox:checked {
+            background-color: var(--purple-neon);
+        }
+
+        .custom-checkbox:checked::after {
+            content: 'x';
+            position: absolute;
+            color: var(--bg-void);
+            font-size: 14px;
+            font-weight: 700;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.3rem;
+        }
+
+        .task-title {
+            font-weight: 700;
+            color: var(--purple-neon);
+            font-size: 1.1rem;
+            text-transform: uppercase;
+        }
+
+        .task-topic {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .task-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.75rem;
+        }
+
+        .tag {
+            padding: 0.2rem 0.5rem;
+            border: 1px solid;
+        }
+
+        .time-tag {
+            border-color: var(--text-muted);
+            color: var(--text-muted);
+        }
+
+        .priority-high {
+            border-color: var(--sys-high);
+            color: var(--sys-high);
+        }
+
+        .priority-medium {
+            border-color: var(--sys-mid);
+            color: var(--sys-mid);
+        }
+
+        .priority-low {
+            border-color: var(--sys-low);
+            color: var(--sys-low);
+        }
+
+        .task-item.completed {
+            opacity: 0.4;
+            border-left-color: var(--text-muted);
+        }
+
+        .task-item.completed .task-title {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        .delete-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: color 0.2s;
+            font-family: monospace;
+        }
+
+        .delete-btn:hover {
+            color: var(--sys-high);
+        }
+
+        /* Smart Diagnostics */
+        .smart-engine {
+            border-color: var(--sys-low);
+        }
+
+        .smart-engine .panel-header {
+            background: rgba(0, 255, 204, 0.1);
+            color: var(--sys-low);
+            border-bottom-color: var(--sys-low);
+        }
+
+        .smart-engine.alert {
+            border-color: var(--sys-high);
+        }
+
+        .smart-engine.alert .panel-header {
+            background: rgba(255, 0, 60, 0.1);
+            color: var(--sys-high);
+            border-bottom-color: var(--sys-high);
+        }
+
+        #suggestion-text {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: var(--text-primary);
+        }
+
+        /* --- SECURE LOCKDOWN OVERLAY --- */
+        .focus-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000000;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .focus-overlay::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(176, 38, 255, 0.05) 2px, rgba(176, 38, 255, 0.05) 4px);
+            pointer-events: none;
+        }
+
+        .overlay-content {
+            border: 2px solid var(--purple-neon);
+            background: var(--bg-panel);
+            padding: 4rem;
+            box-shadow: 0 0 50px var(--purple-dim), inset 0 0 20px var(--purple-dim);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+            min-width: 50vw;
+            position: relative;
+        }
+
+        .overlay-content h2 {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .overlay-content h2 span {
+            color: var(--purple-neon);
+        }
+
+        .focus-timer-huge {
+            font-size: 10rem;
+            font-weight: 700;
+            color: var(--purple-neon);
+            text-shadow: 0 0 20px var(--purple-glow);
+            line-height: 1;
+        }
+
+        .disrupt-controls {
+            border-top: 1px dashed var(--purple-border);
+            padding-top: 2rem;
+            width: 100%;
+        }
+
+        .disrupt-text {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        #overlay-disrupt-count {
+            color: var(--sys-high);
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container" id="dashboard-container">
+        <header>
+            <div class="logo">
+                <h1>Smart Planner</h1>
+                <p>Task Management System</p>
+            </div>
+            <div class="system-status">System Online</div>
+        </header>
+
+        <div class="col-left" style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+            <section class="terminal-panel">
+                <div class="panel-header">
+                    <span>Add New Task</span>
+                </div>
+                <div class="panel-content">
+                    <form id="task-form">
+                        <div class="input-group">
+                            <label for="subject">Subject</label>
+                            <input type="text" id="subject" placeholder="Enter the subject..." required>
+                        </div>
+                        <div class="input-group">
+                            <label for="topic">Topic</label>
+                            <input type="text" id="topic" placeholder="Enter the topic..." required>
+                        </div>
+                        <div class="input-group">
+                            <label for="time">Estimated Time (Mins)</label>
+                            <input type="number" id="time" placeholder="Enter estimated minutes..." min="1" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="priority">Priority</label>
+                            <select id="priority" required>
+                                <option value="high">High Priority</option>
+                                <option value="medium" selected>Medium Priority</option>
+                                <option value="low">Low Priority</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="cmd-btn" style="margin-top: 1rem;">Add Task</button>
+                    </form>
+                </div>
+            </section>
+
+            <section class="terminal-panel progress-tracker">
+                <div class="panel-header">
+                    <span>Progress Tracker</span>
+                </div>
+                <div class="panel-content">
+                    <div class="stats-header">
+                        <span style="color: var(--text-muted); font-size:0.8rem;">Completion Rate</span>
+                        <span id="progress-percentage">0%</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="progress-fill"></div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-box"><span class="stat-label">Pending Tasks</span><span
+                                class="stat-num pending-num" id="pending-count">0</span></div>
+                        <div class="stat-box"><span class="stat-label">Completed Tasks</span><span
+                                class="stat-num complete-num" id="completed-count">0</span></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="col-mid">
+            <section class="terminal-panel" style="height: 100%;">
+                <div class="panel-header">
+                    <span>Task List</span>
+                </div>
+                <div class="panel-content task-list" id="task-list">
+                    <div class="empty-state" id="empty-state">No tasks added yet. Start planning!</div>
+                </div>
+            </section>
+        </div>
+
+        <div class="col-right" style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+            <section class="terminal-panel">
+                <div class="panel-header" style="background: var(--purple-neon); color: var(--bg-void);">
+                    <span>Focus Mode</span>
+                </div>
+                <div class="panel-content">
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">
+                        Warning: Entering Focus Mode restricts your screen. If you leave the tab, you lose a break
+                        token. You have 3 breaks allowed.
+                    </p>
+
+                    <div class="input-group">
+                        <label>Target Task:</label>
+                        <select id="focus-task-select">
+                            <option value="">-- Select a task --</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Focus Time (Mins):</label>
+                        <input type="number" id="focus-time-override" placeholder="Enter focus minutes..." min="1">
+                    </div>
+
+                    <button id="start-overlay-btn" class="cmd-btn"
+                        style="margin-top: 1rem; border-color: var(--sys-high); color: var(--sys-high);">Start Focus
+                        Mode</button>
+                </div>
+            </section>
+
+            <section class="terminal-panel smart-engine" id="smart-suggestion">
+                <div class="panel-header">
+                    <span>Smart Suggestions</span>
+                </div>
+                <div class="panel-content">
+                    <p id="suggestion-text">Add tasks to see suggestions.</p>
+                </div>
+            </section>
+        </div>
+
+    </div>
+
+    <div id="focus-overlay" class="focus-overlay" style="display: none;">
+        <div class="overlay-content">
+            <h2>Focusing on: <span id="overlay-task-title">Nothing Selected</span></h2>
+            <div class="focus-timer-huge" id="overlay-timer">25:00</div>
+
+            <div class="disrupt-controls">
+                <div class="disrupt-text">Breaks Remaining: <span id="overlay-disrupt-count">3</span>/3</div>
+                <button id="disrupt-btn" class="cmd-btn stop-btn">Take a Break</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- STATE ---
+            let tasks = JSON.parse(localStorage.getItem('smartPlannerTasks')) || [];
+
+            // Focus Overlay State
+            let timerInterval;
+            let endTime;
+            let isOverlayActive = false;
+            let disruptsLeft = 3;
+            let currentFocusTaskId = null;
+
+            // --- DOM ELEMENTS ---
+            const form = document.getElementById('task-form');
+            const taskList = document.getElementById('task-list');
+            const emptyState = document.getElementById('empty-state');
+
+            const pendingCountEl = document.getElementById('pending-count');
+            const completedCountEl = document.getElementById('completed-count');
+            const progressFill = document.getElementById('progress-fill');
+            const progressText = document.getElementById('progress-percentage');
+            const smartSuggestion = document.getElementById('smart-suggestion');
+            const suggestionText = document.getElementById('suggestion-text');
+
+            const focusSelect = document.getElementById('focus-task-select');
+            const timeOverrideInput = document.getElementById('focus-time-override');
+            const startOverlayBtn = document.getElementById('start-overlay-btn');
+
+            const focusOverlay = document.getElementById('focus-overlay');
+            const overlayTaskTitle = document.getElementById('overlay-task-title');
+            const overlayTimer = document.getElementById('overlay-timer');
+            const overlayDisruptCount = document.getElementById('overlay-disrupt-count');
+            const disruptBtn = document.getElementById('disrupt-btn');
+
+            // --- INIT ---
+            renderTasks();
+            updateDashboard();
+
+            // --- TASK LOGIC ---
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const newTask = {
+                    id: Date.now().toString(),
+                    subject: document.getElementById('subject').value,
+                    topic: document.getElementById('topic').value,
+                    time: document.getElementById('time').value,
+                    priority: document.getElementById('priority').value,
+                    completed: false,
+                    createdAt: new Date().toISOString()
+                };
+                tasks.push(newTask);
+                saveTasks();
+                form.reset();
+                document.getElementById('priority').value = 'medium';
+                renderTasks();
+                updateDashboard();
+            });
+
+            taskList.addEventListener('click', (e) => {
+                if (e.target.classList.contains('custom-checkbox')) {
+                    toggleTaskStatus(e.target.closest('.task-item').dataset.id);
+                }
+                if (e.target.closest('.delete-btn')) {
+                    deleteTask(e.target.closest('.task-item').dataset.id);
+                }
+            });
+
+            function toggleTaskStatus(id) {
+                const task = tasks.find(t => t.id === id);
+                if (task) {
+                    task.completed = !task.completed;
+                    saveTasks();
+                    renderTasks();
+                    updateDashboard();
+
+                    if (task.completed && currentFocusTaskId === id && !isOverlayActive) {
+                        currentFocusTaskId = null;
+                        startOverlayBtn.textContent = "Start Focus Mode";
+                    }
+                }
+            }
+
+            function deleteTask(id) {
+                tasks = tasks.filter(t => t.id !== id);
+                saveTasks();
+                renderTasks();
+                updateDashboard();
+                if (currentFocusTaskId === id) currentFocusTaskId = null;
+            }
+
+            function saveTasks() { localStorage.setItem('smartPlannerTasks', JSON.stringify(tasks)); }
+
+            function renderTasks() {
+                const currentSelection = focusSelect.value;
+                focusSelect.innerHTML = '<option value="">-- Select a task --</option>';
+
+                const pendingTasks = tasks.filter(t => !t.completed);
+                pendingTasks.forEach(task => {
+                    const option = document.createElement('option');
+                    option.value = task.id;
+                    option.textContent = `${task.subject}`;
+                    focusSelect.appendChild(option);
+                });
+
+                if (pendingTasks.find(t => t.id === currentSelection)) {
+                    focusSelect.value = currentSelection;
+                }
+
+                if (tasks.length === 0) {
+                    taskList.innerHTML = ''; taskList.appendChild(emptyState); emptyState.style.display = 'block'; return;
+                }
+                emptyState.style.display = 'none';
+                taskList.innerHTML = '';
+
+                const priorityWeight = { high: 3, medium: 2, low: 1 };
+                const sortedTasks = [...tasks].sort((a, b) => {
+                    if (a.completed !== b.completed) return a.completed ? 1 : -1;
+                    return priorityWeight[b.priority] - priorityWeight[a.priority];
+                });
+
+                sortedTasks.forEach(task => {
+                    const el = document.createElement('div');
+                    el.className = `task-item ${task.completed ? 'completed' : ''}`;
+                    el.dataset.id = task.id;
+                    el.innerHTML = `
+                <div class="checkbox-container"><input type="checkbox" class="custom-checkbox" ${task.completed ? 'checked' : ''}></div>
+                <div class="task-content">
+                    <div class="task-header">
+                        <span class="task-title">${escapeHtml(task.subject)}</span>
+                        <button class="delete-btn">[Delete]</button>
+                    </div>
+                    <div class="task-topic">${escapeHtml(task.topic)}</div>
+                    <div class="task-meta">
+                        <span class="tag time-tag">Time: ${escapeHtml(task.time)} mins</span>
+                        <span class="tag priority-${task.priority}">Priority: ${task.priority}</span>
+                    </div>
+                </div>
+            `;
+                    taskList.appendChild(el);
+                });
+            }
+
+            function updateDashboard() {
+                const total = tasks.length;
+                const completed = tasks.filter(t => t.completed).length;
+                const pending = total - completed;
+
+                pendingCountEl.textContent = pending;
+                completedCountEl.textContent = completed;
+                const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
+                progressText.textContent = `${percentage}%`;
+                progressFill.style.width = `${percentage}%`;
+
+                if (total === 0) {
+                    smartSuggestion.className = 'terminal-panel smart-engine';
+                    suggestionText.innerHTML = '> Add some tasks to get started.';
+                } else {
+                    const pendingHigh = tasks.filter(t => !t.completed && t.priority === 'high').length;
+                    if (pendingHigh > 0) {
+                        smartSuggestion.className = 'terminal-panel smart-engine alert';
+                        suggestionText.innerHTML = `> Priority Alert: You have ${pendingHigh} high priority tasks pending.`;
+                    } else if (pending === 0) {
+                        smartSuggestion.className = 'terminal-panel smart-engine';
+                        suggestionText.innerHTML = '> Great job! All tasks are completed.';
+                    } else {
+                        smartSuggestion.className = 'terminal-panel smart-engine';
+                        suggestionText.innerHTML = '> You are on track. Enter Focus Mode to start working.';
+                    }
+                }
+            }
+
+            // --- FULLSCREEN FOCUS LOGIC ---
+
+            focusSelect.addEventListener('change', () => {
+                const tId = focusSelect.value;
+                if (tId) {
+                    const task = tasks.find(t => t.id === tId);
+                    if (task) timeOverrideInput.value = task.time;
+                } else {
+                    timeOverrideInput.value = "";
+                }
+
+                if (tId !== currentFocusTaskId) {
+                    disruptsLeft = 3;
+                    currentFocusTaskId = tId;
+                    startOverlayBtn.textContent = "Start Focus Mode";
+                }
+            });
+
+            startOverlayBtn.addEventListener('click', () => {
+                if (!focusSelect.value) { alert('Please select a task first.'); return; }
+
+                let mins = parseInt(timeOverrideInput.value);
+                if (isNaN(mins) || mins <= 0) mins = 25;
+
+                const selectedTask = tasks.find(t => t.id === focusSelect.value);
+                overlayTaskTitle.textContent = `${selectedTask.subject}`;
+
+                overlayDisruptCount.textContent = disruptsLeft;
+                disruptBtn.disabled = false;
+                if (disruptsLeft === 0) {
+                    disruptBtn.disabled = true;
+                    disruptBtn.textContent = "0 Breaks Left - You must finish!";
+                } else {
+                    disruptBtn.textContent = "Take a Break";
+                }
+
+                endTime = Date.now() + (mins * 60 * 1000);
+
+                isOverlayActive = true;
+                focusOverlay.style.display = 'flex';
+
+                updateOverlayDisplay(Math.round((endTime - Date.now()) / 1000));
+                timerInterval = setInterval(() => {
+                    let remainingSeconds = Math.round((endTime - Date.now()) / 1000);
+                    if (remainingSeconds <= 0) {
+                        remainingSeconds = 0;
+                        finishFocusSession();
+                    }
+                    updateOverlayDisplay(remainingSeconds);
+                }, 1000);
+            });
+
+            disruptBtn.addEventListener('click', () => {
+                if (disruptsLeft > 0) {
+                    pauseAndExitOverlay();
+                }
+            });
+
+            function pauseAndExitOverlay(isForced = false) {
+                disruptsLeft--;
+                clearInterval(timerInterval);
+                isOverlayActive = false;
+                focusOverlay.style.display = 'none';
+
+                let remainingSeconds = Math.max(0, Math.round((endTime - Date.now()) / 1000));
+                timeOverrideInput.value = Math.ceil(remainingSeconds / 60);
+
+                startOverlayBtn.textContent = `Resume Focus [${disruptsLeft} Breaks Left]`;
+
+                if (isForced) {
+                    alert("Warning: You left the tab. You lost one break token.");
+                }
+            }
+
+            function finishFocusSession() {
+                clearInterval(timerInterval);
+                isOverlayActive = false;
+                focusOverlay.style.display = 'none';
+
+                currentFocusTaskId = null;
+                startOverlayBtn.textContent = "Start Focus Mode";
+                timeOverrideInput.value = "";
+
+                alert("Focus session complete! Mark your task as done on the dashboard.");
+            }
+
+            function updateOverlayDisplay(seconds) {
+                let m = Math.floor(seconds / 60);
+                let s = seconds % 60;
+                overlayTimer.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+
+            window.addEventListener('blur', () => {
+                if (isOverlayActive) {
+                    if (disruptsLeft > 0) {
+                        pauseAndExitOverlay(true);
+                    } else {
+                        alert("Warning: No breaks left! Return to the screen immediately.");
+                    }
+                }
+            });
+
+            function escapeHtml(str) {
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+        });
+    </script>
+</body>
+
+</html>
